@@ -1,4 +1,5 @@
 import tkinter as tk
+import tkinter.ttk
 import framework
 from tkinter import *
 import cv2
@@ -6,6 +7,9 @@ import numpy as np
 from PIL import Image, ImageTk
 # To get the dialog box to open when required  
 from tkinter import filedialog 
+import os
+from collections import defaultdict
+import functools
 class ImageViewer(framework.Framework):
 
     start_x, start_y = 0, 0
@@ -20,7 +24,6 @@ class ImageViewer(framework.Framework):
         "Carpal_Tunnel"
     )
     selected_tool_bar_function = tool_bar_functions[0]
-
     def create_tool_bar_buttons(self):
         for index, name in enumerate(self.tool_bar_functions):
             icon = tk.PhotoImage(file='icons/' + name + '.png')
@@ -37,7 +40,15 @@ class ImageViewer(framework.Framework):
 
     def display_options_in_the_top_bar(self):
         self.show_selected_tool_icon_in_top_bar(
-            self.selected_tool_bar_function)
+            self.selected_tool_bar_function
+        )
+        options_function_name = "{}_options".format(self.selected_tool_bar_function)
+        func = getattr(
+            self, 
+            options_function_name, 
+            self.function_not_defined
+        )
+        func()
 
     def remove_options_from_top_bar(self):
         for child in self.top_bar.winfo_children():
@@ -67,11 +78,12 @@ class ImageViewer(framework.Framework):
     def on_mouse_unpressed_motion(self, event):
         pass
 
-    def __init__(self, root):
+    def __init__(self, root, evaluation_model = None):
         super().__init__(root)
         root.title("GUI")
         self.create_gui()
-
+        self.Sequence = defaultdict(list)
+        self.scale_bar_slide_idx = 0
     def create_gui(self):
         self.create_menu()
         self.create_top_bar()
@@ -83,9 +95,12 @@ class ImageViewer(framework.Framework):
     def create_menu(self):
         self.menubar = tk.Menu(self.root)
         menu_definitions = (
-            'File- &T1Seq/Ctrl+1/self.select_MN_GT_image, \
-                &T2Seq/Ctrl+2/self.select_FT_GT_image,\
-                &GTSeq/Ctrl+G/self.select_CT_GT_image, sep, Exit/Alt+F4/self.on_close_menu_clicked',
+            'File- &MNGroundTruth/Ctrl+1/self.select_MN_GT_image, \
+                &FTGroundTruth/Ctrl+2/self.select_FT_GT_image,\
+                &CTGroundTruth/Ctrl+G/self.select_CT_GT_image,\
+                &T1Image/Ctrl+G/self.select_T1_image,\
+                &T2Image/Ctrl+G/self.select_T2_image, \
+                &Seq/Ctrl+G/self.select_sequence,sep, Exit/Alt+F4/self.on_close_menu_clicked',
             'Edit- Undo/Ctrl+Z/self.on_undo_menu_clicked, sep',
             'View- Zoom in//self.on_canvas_zoom_in_menu_clicked,Zoom Out//self.on_canvas_zoom_out_menu_clicked',
             'About- About/F1/self.on_about_menu_clicked'
@@ -100,49 +115,72 @@ class ImageViewer(framework.Framework):
         self.tool_bar = tk.Frame(self.root, relief="raised", width=50)
         self.tool_bar.pack(fill="y", side="left", pady=3)
 
-    def create_canvas(self, text, width_param = 225, height_param = 225): 
+    def create_scale_bar(self, range = 19.0):
+        frame = tk.Frame(self.root)
+        self.scale_bar = tk.ttk.Scale(
+            frame, from_=0.0, to = range, command=self.on_scale_bar_clicked
+        )
+        self.scale_bar.set(0.0)
+        self.scale_bar.pack()
+        frame.pack()
+
+    def create_canvas(self, text, width_param = 225, height_param = 225):
+        #T1 image configuation
+        self.T1_image = ImageTk.PhotoImage(
+            Image.open('../data/0/T1/0.jpg').resize(
+                (int(width_param * 1.5), int(height_param * 1.5)), Image.ANTIALIAS)
+        )
+        self.T1_image_label = tk.Label(
+            root, text='../data/0/T1/0.jpg',anchor ='nw',
+            image = self.T1_image, 
+            compound = 'bottom'
+        )
+        self.T1_image_label.pack(side='left', anchor=NW)
+        #T2 image configuation
+        self.T2_image = ImageTk.PhotoImage(
+            Image.open('../data/0/T2/0.jpg').resize(
+                (int(width_param * 1.5), int(height_param * 1.5)), Image.ANTIALIAS)
+        )
+        self.T2_image_label = tk.Label(
+            root, text='../data/0/T2/0.jpg',anchor ='nw',
+            image = self.T2_image, 
+            compound = 'bottom'
+        )
+        self.T2_image_label.pack(side='left', anchor=NW)
+
+        #Median Nerve image configuation
         self.Median_Nerve_image = ImageTk.PhotoImage(
             Image.open('../data/0/MN/0.jpg').resize(
                 (width_param, height_param), Image.ANTIALIAS)
         )
         self.Median_Nerve_label = tk.Label(
-            root,text='../data/0/MN/0.jpg',
+            root,text='Median_Nerve:../data/0/MN/0.jpg',anchor ='ne',
             image = self.Median_Nerve_image, 
             compound = 'top'
         )
-        self.Median_Nerve_label.pack(side=TOP)
+        self.Median_Nerve_label.pack(side='left', anchor=NE)
 
         self.Flexor_Tendons_image = ImageTk.PhotoImage(
             Image.open('../data/0/FT/0.jpg').resize(
                 (width_param, height_param), Image.ANTIALIAS)
         )
         self.Flexor_Tendons_label = tk.Label(
-            root,text='../data/0/FT/0.jpg',
+            root,text='Flexor_Tendons:../data/0/FT/0.jpg',
             image = self.Flexor_Tendons_image, 
             compound = 'top'
         )
-        self.Flexor_Tendons_label.pack(side=TOP)
+        self.Flexor_Tendons_label.pack(side='left', anchor=NE)
 
         self.Carpal_tunnel_image = ImageTk.PhotoImage(
             Image.open('../data/0/CT/0.jpg').resize(
                 (width_param, height_param), Image.ANTIALIAS)
         )
         self.Carpal_tunnel_label = tk.Label(
-            root,text='../data/0/CT/0.jpg',
+            root,text='Carpal_tunnel:../data/0/CT/0.jpg',
             image = self.Carpal_tunnel_image, 
             compound = 'top'
         )
-        self.Carpal_tunnel_label.pack(side = BOTTOM)
-        
-    def create_scroll_bar(self):
-        x_scroll = tk.Scrollbar(self.canvas_frame, orient="horizontal")
-        x_scroll.pack(side="bottom", fill="x")
-        x_scroll.config(command=self.canvas.xview)
-        y_scroll = tk.Scrollbar(self.canvas_frame, orient="vertical")
-        y_scroll.pack(side="right", fill="y")
-        y_scroll.config(command=self.canvas.yview)
-        self.canvas.config(
-            xscrollcommand=x_scroll.set, yscrollcommand=y_scroll.set)
+        self.Carpal_tunnel_label.pack(side = 'left', anchor=NE)
 
     def bind_menu_accelrator_keys(self):
         self.root.bind('<KeyPress-F1>', self.on_about_menu_clicked)
@@ -150,37 +188,224 @@ class ImageViewer(framework.Framework):
         self.root.bind('<Control-S>', self.on_save_menu_clicked)
         self.root.bind('<Control-z>', self.on_undo_menu_clicked)
         self.root.bind('<Control-Z>', self.on_undo_menu_clicked)
+        
     @classmethod
     def open_image(cls, filename, width = 224, height = 224):
+        img = None
         img = ImageTk.PhotoImage(
             Image.open(filename).resize(
                 (width, height), Image.ANTIALIAS)
         )
         return img
+
+    @classmethod
+    def display_image_on_label(
+        cls, 
+        label, 
+        _image, 
+        img_content, 
+        text, 
+        *place_config,
+        **pack_config
+        ):
+        _image = img_content
+        label.configure(image = img_content)
+        label.image = img_content
+        label.pack(**pack_config)
+        label.configure(text = text)
+
     def select_MN_GT_image(self, event = None):
-        filename = filedialog.askopenfilename(title ='files browser')
-        self.Median_Nerve_image = ImageViewer.open_image(filename)
-        self.Median_Nerve_label.configure(image = self.Median_Nerve_image)
-        self.Median_Nerve_label.image = self.Median_Nerve_image
-        self.Median_Nerve_label.pack(side = 'top')
-        self.Median_Nerve_label.configure(text = "Median_Nerve:" + filename)
-
+        filename = filedialog.askopenfilename(
+            title ='files browser',
+            filetypes=[('PNG files', '.png .PNG'), ('.JPG files', '.jpg .JPG'), ('.JPEG files', '.jpeg .JPEG')]
+        )
+        _image = None   
+        if type(filename) is not tuple:
+            _image = ImageViewer.open_image(filename)
+        if _image is not None:
+            ImageViewer.display_image_on_label(
+                self.Median_Nerve_label, 
+                self.Median_Nerve_image, 
+                _image,
+                text = "Median_Nerve:" + filename
+            )
+        self.destroy_sequence()
     def select_FT_GT_image(self, event = None):
-        filename = filedialog.askopenfilename(title ='files browser')
-        self.Flexor_Tendons_image = ImageViewer.open_image(filename)
-        self.Flexor_Tendons_label.configure(image = self.Flexor_Tendons_image)
-        self.Flexor_Tendons_label.image = self.Flexor_Tendons_image
-        self.Flexor_Tendons_label.pack(side = 'top')
-        self.Flexor_Tendons_label.configure(text = "Flexor_Tendons:" + filename)
         
+        filename = filedialog.askopenfilename(
+            title ='files browser',
+            filetypes=[('PNG files', '.png .PNG'), ('.JPG files', '.jpg .JPG'), ('.JPEG files', '.jpeg .JPEG')]
+        )
+        _image = None   
+        if type(filename) is not tuple:
+            _image = ImageViewer.open_image(filename)
+        if _image is not None:
+            ImageViewer.display_image_on_label(
+                self.Flexor_Tendons_label, 
+                self.Flexor_Tendons_image, 
+                _image,
+                text = "Flexor_Tendons:" + filename
+            )
+        self.destroy_sequence()
     def select_CT_GT_image(self, event = None):
-        filename = filedialog.askopenfilename(title ='files browser')
-        self.Carpal_tunnel_image = ImageViewer.open_image(filename)
-        self.Carpal_tunnel_label.configure(image = self.Carpal_tunnel_image)
-        self.Carpal_tunnel_label.image = self.Carpal_tunnel_image
-        self.Carpal_tunnel_label.pack(side = BOTTOM)
-        self.Carpal_tunnel_label.configure(text = "Carpal_tunnel:" + filename)
+        filename = filedialog.askopenfilename(
+            title ='files browser',
+            filetypes=[('PNG files', '.png .PNG'), ('.JPG files', '.jpg .JPG'), ('.JPEG files', '.jpeg .JPEG')]
+        )
+        _image = None   
+        if type(filename) is not tuple:
+            _image = ImageViewer.open_image(filename)
+        if _image is not None:
+            ImageViewer.display_image_on_label(
+                self.Carpal_tunnel_label, 
+                self.Carpal_tunnel_image, 
+                _image,
+                text = "Carpal_tunnel:" + filename
+            )
+        self.destroy_sequence()
+    
+    def select_T1_image(self, event = None):
+        filename = filedialog.askopenfilename(
+            title ='files browser',
+            filetypes=[('PNG files', '.png .PNG'), ('.JPG files', '.jpg .JPG'), ('.JPEG files', '.jpeg .JPEG')]
+        )
+        _image = None   
+        if type(filename) is not tuple:
+            _image = ImageViewer.open_image(filename, width = int(1.5 * 224), height = int(1.5 * 224))
+        if _image is not None:
+            pack_config =  {'side' : 'left','anchor' : 'nw'}
+            ImageViewer.display_image_on_label(
+                self.T1_image_label, 
+                self.T1_image, 
+                _image,
+                text = "T1-Image:" + filename,
+                **pack_config
+            )
+        self.destroy_sequence()
 
+    def select_T2_image(self, event = None):
+        filename = filedialog.askopenfilename(
+            title ='files browser',
+            filetypes=[('PNG files', '.png .PNG'), ('.JPG files', '.jpg .JPG'), ('.JPEG files', '.jpeg .JPEG')]
+        )
+        _image = None   
+        if type(filename) is not tuple:
+            _image = ImageViewer.open_image(filename, width = int(1.5 * 224), height = int(1.5 * 224))
+        if _image is not None:
+            pack_config =  {'side' : 'left','anchor' : 'nw'}
+            ImageViewer.display_image_on_label(
+                self.T2_image_label, 
+                self.T2_image, 
+                _image,
+                text = "T2-Image:" + filename,
+                **pack_config
+            )
+        self.destroy_sequence()
+
+    def display_image_on_all_label(self, filename_list):
+        for filename in filename_list:
+            if 'CT' in filename:
+                ImageViewer.display_image_on_label(
+                    self.Carpal_tunnel_label, 
+                    self.Carpal_tunnel_image, 
+                    ImageViewer.open_image(filename),
+                    text = "Carpal-Tunnel:" + filename
+                )
+            elif 'MN' in filename:
+                ImageViewer.display_image_on_label(
+                    self.Median_Nerve_label, 
+                    self.Median_Nerve_image, 
+                    ImageViewer.open_image(filename),
+                    text = "Median-Nerve:" + filename
+                )
+            elif 'FT' in filename:
+                ImageViewer.display_image_on_label(
+                    self.Flexor_Tendons_label, 
+                    self.Flexor_Tendons_image, 
+                    ImageViewer.open_image(filename),
+                    text = "Flexor-Tendons:" + filename
+                )
+            elif 'T1' in filename:
+                ImageViewer.display_image_on_label(
+                    self.T1_image_label, 
+                    self.T1_image, 
+                    ImageViewer.open_image(filename, width = int(1.5 * 224), height = int(1.5 * 224)),
+                    text = "T1-Image:" + filename,
+                    **{'side' : 'left','anchor' : 'nw'}
+                )
+            elif 'T2' in filename:
+                ImageViewer.display_image_on_label(
+                    self.T2_image_label, 
+                    self.T2_image, 
+                    ImageViewer.open_image(filename, width = int(1.5 * 224), height = int(1.5 * 224)),
+                    text = "T2-Image:" + filename,
+                    **{'side' : 'left','anchor' : 'nw'}
+                )
+
+    def select_sequence(self, event = None):
+        root_directory_path = filedialog.askdirectory()
+        if root_directory_path is not None:
+            self.Sequence.clear()
+            self.Sequence = self.add_sequence_from_directory(root_directory_path = root_directory_path)
+            self.display_image_on_all_label(self.Sequence[self.scale_bar_slide_idx])
+            self.create_scale_bar()
+
+    def add_sequence_from_directory(self, root_directory_path = None) -> defaultdict(list):
+        if not root_directory_path:
+            return None
+        # get all sub-folder name
+        # list [CT,FT,MN,T1,T2]
+        image_files_in_directory = defaultdict(list)
+        # root_directory_path : /wrist/data/0
+        for sub_dirpaths in os.listdir(root_directory_path):
+            sub_dirpaths_full = root_directory_path + '/' + sub_dirpaths #eg. /wrist/data/0/T1
+            for (dirpath, dirnames, filenames) in os.walk(sub_dirpaths_full):
+                for image_file in filenames:
+                    if image_file.endswith(".png") or image_file.endswith(".jpg"):
+                        # image_idx denote the image number before the Extension, eg. 8.jpg
+                        image_idx = int(image_file.split('.', 1 )[0])
+                        # image type denote the type of the image usage
+                        _image_type = dirpath.rsplit('/', 1)[1]
+                        if _image_type == 'CT':
+                            _image_type = 0
+                        elif _image_type == 'FT':
+                            _image_type = 1
+                        elif _image_type == 'MN':
+                            _image_type = 2
+                        elif _image_type == 'T1':
+                            _image_type = 3
+                        elif _image_type == 'T2':
+                            _image_type = 4
+                        else:
+                            raise Exception('unknown image type {}'.format(_image_type))
+                        full_image_path = os.path.join(dirpath + "/" + image_file)
+                        '''
+                        here we use a dict to store all type of images in one slot, 
+                        using the image_idx as the key and the corresponding value would be the list that contain all type of images
+                        '''
+                        image_files_in_directory[image_idx].insert(_image_type,full_image_path)
+        return image_files_in_directory
+
+    def destroy_sequence(self):
+        self.Sequence.clear()
+        self.scale_bar_slide_idx = 0
+
+    def train_options(self):
+        print("Train options")
+
+    def eval_options(self):
+        """Show evaluation result"""
+        eval_result = "Sequence DC(mean)"
+        tk.Label(
+            self.top_bar,
+            text=eval_result
+        ).pack(side="left")
+        label = tk.Label(self.top_bar)
+        label.pack(side="left")
+
+    def function_not_defined(self):
+        pass
+    
     def on_save_menu_clicked(self, event=None):
         pass
 
@@ -201,7 +426,11 @@ class ImageViewer(framework.Framework):
 
     def on_about_menu_clicked(self, event=None):
         pass
-
+    
+    def on_scale_bar_clicked(self, event=None):
+        if self.Sequence is not None:
+            self.scale_bar_slide_idx = int(self.scale_bar.get())
+            self.display_image_on_all_label(self.Sequence[self.scale_bar_slide_idx])
 
 
 if __name__ == '__main__':
