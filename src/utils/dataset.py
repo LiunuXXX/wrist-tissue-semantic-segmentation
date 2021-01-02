@@ -7,6 +7,7 @@ from torch.utils.data import Dataset
 import logging
 from PIL import Image
 
+#see also https://discuss.pytorch.org/t/how-to-load-images-from-different-folders-in-the-same-batch/18942/2
 class BasicMedicalDataset(Dataset):
     def __init__(self, imgs_dir, masks_dir, scale=1, mask_suffix=''):
         self.imgs_dir = imgs_dir
@@ -64,5 +65,11 @@ class BasicMedicalDataset(Dataset):
             'mask': torch.from_numpy(mask).type(torch.FloatTensor)
         }
 
-def mask_to_image(mask):
-    return Image.fromarray((mask * 255).astype(np.uint8))
+def cast_to_image(tensor):
+    # Input tensor is (H, W, 3). Convert to (3, H, W).
+    tensor = tensor.permute(2, 0, 1)
+    # Conver to PIL Image and then np.array (output shape: (H, W, 3))
+    img = np.array(torchvision.transforms.ToPILImage()(tensor.detach().cpu()))
+    # Map back to shape (3, H, W), as tensorboard needs channels first.
+    img = np.moveaxis(img, [-1], [0])
+    return img
