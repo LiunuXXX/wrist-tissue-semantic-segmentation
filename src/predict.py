@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from PIL import Image
 from torchvision import transforms
 
-from unet import UNet
+from model.unet import UNet
 from utils.data_vis import plot_img_and_mask
 from utils.dataset import BasicMedicalDataset
 
@@ -48,6 +48,36 @@ def predict_img(net,
 
     return full_mask > out_threshold
 
+def get_output_filenames(
+    in_files:list,
+    output_dir:str 
+    ):
+    print(in_files)
+    out_files = []
+    if not output_dir:
+        logging.error("The folder to which the file location of output is not declared")
+        raise SystemExit()
+    elif not os.path.isdir(output_dir):
+        logging.error("The folder to which the file location of output is not exist")
+        raise SystemExit()
+    else:
+        for in_file in in_files:
+            if not in_file.endswith(('jpg', 'jpeg', 'png')):
+                logging.error(f"file {in_file} is not a image file")
+                raise SystemExit()
+            else:
+                '''
+                In order to be able to easily distinguish the original absolute path of the predicted mask image, 
+                we replace all the'/' symbols in the path of the original input image with '-' 
+                and prefix the output folder as the output mask image Absolute path
+                for example the output masked image of input image './data/0/T1/0.jpg' would be './eval/data-0-T1-0.jpg'
+                '''
+                filename = str(in_file).split('./')[1].replace("/", "-")
+                out_files.append(os.path.join(output_dir, filename))
+    print(f'output files: {out_files}')
+    return out_files
+
+
 def main():
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -56,12 +86,8 @@ def main():
     parser.add_argument(
         "--config", type=str, required=True, help="Path to (.yml) config file."
     )
-    parser.add_argument(
-        "--input_image",
-        type=str,
-        default="",
-        help="Path to image to be inferenced",
-    )
+    parser.add_argument('--input_images', '-i', metavar='INPUT', nargs='+',
+                        help='filenames of input images', required=True)
     configargs = parser.parse_args()
     # Read config file.
     cfg = None
@@ -78,12 +104,16 @@ def main():
     #print(net)
     net.to(device=device)
     net.load_state_dict(
-        torch.load(cfg_dict.get('model_weights', None), 
-        map_location=device)
+        torch.load(cfg_dict.get('model_weights', None),map_location=device)
     )
+    
     logging.info("Model loaded !")
+    out_files = get_output_filenames(
+        in_files = configargs.input_images,
+        output_dir = cfg_dict.get('output_dir',None)
+    )
     # start evaluating
-    for i, filename in enumerate(in_files):
+    for i, filename in enumerate(configargs.input_images):
         logging.info("\nPredicting image {} ...".format(filename))
 
         img = Image.open(filename)
@@ -94,15 +124,11 @@ def main():
                            out_threshold=cfg_dict.get('mask_threshold', 0.5),
                            device=device)
 
-        if not args.no_save:
+        if not cfg_dict.get('save', True):
             out_filename = out_files[i]
             result = mask_to_image(mask)
             result.save(out_files[i])
 
             logging.info("Mask saved to {}".format(out_files[i]))
-
-        if args.viz:
-            logging.info("Visualizing results for image {}, close to continue ...".format(filename))
-            plot_img_and_mask(img, mask)
 if __name__ == "__main__":
     main()

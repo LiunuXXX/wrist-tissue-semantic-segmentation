@@ -1,4 +1,5 @@
-model_weights: ../pretrained/CT_CP_epoch10.pth
+model_weights: ./pretrained/CT_CP_epoch10.pth
 mask_threshold: 0.5
 scale: 1
 output_dir: ./eval/
+save: True
