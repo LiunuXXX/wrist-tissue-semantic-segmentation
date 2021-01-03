@@ -1,0 +1,9 @@
+base_dir: ./data/ 
+image_dir_suffix: T1
+mask_dir_suffix: FT
+learning_rate: 0.0001
+batch_size: 3
+epochs: 10
+scale: 1
+validation: 0.2
+checkpoint_dir: ./pretrained/

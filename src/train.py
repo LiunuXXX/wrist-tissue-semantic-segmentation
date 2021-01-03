@@ -13,21 +13,22 @@ from model.unet import UNet
 from eval import eval_net
 from utils.dataset import BasicMedicalDataset
 from torch.utils.data import DataLoader, random_split
-
 def TrainNet(
     Net,
     device,
-    dir_img,
-    dir_mask,
+    root_imgs_dir,
+    imgs_dir_name,
+    mask_dir_name,
     dir_checkpoint,
     epochs = 5,
     batch_size = 1,
     lr = 0.001,
     val_percent = 0.1,
     save_checkpoints = True,
-    img_scale = 0.5
+    img_scale = 1
 ):
-    dataset = BasicMedicalDataset(dir_img, dir_mask, img_scale)
+    print(f"training data {root_imgs_dir}")
+    dataset = BasicMedicalDataset(root_imgs_dir, imgs_dir_name, mask_dir_name, img_scale)
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
     train, val = random_split(dataset, [n_train, n_val])
@@ -35,14 +36,14 @@ def TrainNet(
         train,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=8,
+        num_workers=0,
         pin_memory=True
     )
     val_loader = DataLoader(
         val,
         batch_size=batch_size,
         shuffle=False,
-        num_workers=8,
+        num_workers=0,
         pin_memory=True,
         drop_last = True
     )
@@ -57,7 +58,7 @@ def TrainNet(
         Device:          {device.type}
         Images scaling:  {img_scale}
     ''')
-    optimizer = optim.RMSPropOptimizer(
+    optimizer = optim.RMSprop(
         Net.parameters(), 
         lr = lr,
         weight_decay = 1e-8,
@@ -119,7 +120,7 @@ def TrainNet(
         except OSError:
             pass
         torch.save(Net.state_dict(),
-                       dir_checkpoint + f'CP_epoch{epoch + 1}.pth')
+                       dir_checkpoint + f'{mask_dir_name}_CP_epoch{epoch + 1}.pth')
         logging.info(f'Checkpoint {epoch + 1} saved !')
 
 def main():
@@ -148,7 +149,7 @@ def main():
     #   - For 1 class and background, use n_classes=1
     #   - For 2 classes, use n_classes=1
     #   - For N > 2 classes, use n_classes=N
-    net = UNet(n_channels=3, n_classes=1, bilinear=True)
+    net = UNet(n_channels=1, n_classes=1, bilinear=True)
     #print(net)
     logging.info(f'Network:\n'
                  f'\t{net.n_channels} input channels\n'
@@ -157,10 +158,18 @@ def main():
     net.to(device=device)
     # start training
     TrainNet(
-        net = net,
+        Net = net,
         device = device,
-        dir_img = cfg_dict.get(key, default=None),
-        
+        root_imgs_dir = cfg_dict.get('base_dir', None),
+        imgs_dir_name = cfg_dict.get("image_dir_suffix", None),
+        mask_dir_name = cfg_dict.get("mask_dir_suffix", None),
+        dir_checkpoint = cfg_dict.get("checkpoint_dir", None),
+        epochs = cfg_dict.get("epochs", 5),
+        batch_size = cfg_dict.get("batch_size", 1),
+        lr = cfg_dict.get("learning_rate", 0.0001),
+        val_percent = cfg_dict.get("validation", 0.2),
+        save_checkpoints = True,
+        img_scale = cfg_dict.get("scale", 1)
     )
 if __name__ == "__main__":
     main()

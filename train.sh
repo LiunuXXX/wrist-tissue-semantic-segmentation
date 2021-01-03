@@ -1,1 +1,0 @@
-python3 src/train.py --config pretrained/config.yml
