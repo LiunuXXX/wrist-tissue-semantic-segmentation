@@ -10,6 +10,7 @@ from tkinter import filedialog
 import os
 from collections import defaultdict
 import functools
+from predict import predict
 class ImageViewer(framework.Framework):
 
     start_x, start_y = 0, 0
@@ -384,6 +385,7 @@ class ImageViewer(framework.Framework):
                         using the image_idx as the key and the corresponding value would be the list that contain all type of images
                         '''
                         image_files_in_directory[image_idx].insert(_image_type,full_image_path)
+        print(image_files_in_directory[0])
         return image_files_in_directory
 
     def destroy_sequence(self):
@@ -395,7 +397,31 @@ class ImageViewer(framework.Framework):
 
     def eval_options(self):
         """Show evaluation result"""
-        eval_result = "Sequence DC(mean)"
+        Median_nerve_score = 0.0
+        Flexor_tendons_score = 0.0
+        Carpal_tunnel_score = 0.0
+        if not self.Sequence:
+            
+            eval_result = f"image DC :Median nerve : {Median_nerve_score} Flexor tendons : {Flexor_tendons_score}  Carpal tunnel : {Carpal_tunnel_score}"
+        else:
+            for idx,(ct, mn, ft, t1, t2) in self.Sequence.items():
+                ct_out_files, ct_countors_outs_files, ct_dc_val_records = predict(
+                    input_images = [t1,t2],
+                    target_images = [ct,ct],
+                    config_file="/wrist/eval/configCT.yml"
+                )
+                Carpal_tunnel_score = Carpal_tunnel_score + ct_dc_val_records[0] + ct_dc_val_records[1]
+
+                ft_out_files, ft_countors_outs_files, ft_dc_val_records = predict(
+                    input_images = [t1,t2],
+                    target_images = [ft,ft],
+                    config_file="/wrist/eval/configFT.yml"
+                )
+                Flexor_tendons_score = Flexor_tendons_score + ft_dc_val_records[0] + ft_dc_val_records[1]
+
+            Carpal_tunnel_score = Carpal_tunnel_score / (2*len(self.Sequence))
+            Flexor_tendons_score = Flexor_tendons_score / (2*len(self.Sequence))
+            eval_result = f"image DC :Median nerve : {Median_nerve_score} Flexor tendons : {Flexor_tendons_score}  Carpal tunnel : {Carpal_tunnel_score}"
         tk.Label(
             self.top_bar,
             text=eval_result
@@ -428,7 +454,7 @@ class ImageViewer(framework.Framework):
         pass
     
     def on_scale_bar_clicked(self, event=None):
-        if self.Sequence is not None:
+        if self.Sequence:
             self.scale_bar_slide_idx = int(self.scale_bar.get())
             self.display_image_on_all_label(self.Sequence[self.scale_bar_slide_idx])
 

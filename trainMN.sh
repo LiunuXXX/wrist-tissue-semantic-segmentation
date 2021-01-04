@@ -1,1 +1,1 @@
-python3 src/train.py --config pretrained/configMN.yml
+python3 src/train.py --config /wrist/pretrained/configMN.yml

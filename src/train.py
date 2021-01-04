@@ -92,7 +92,7 @@ def TrainNet(
 
                 masks_pred = Net(imgs)
                 loss = criterion(masks_pred, true_mask)
-                epoch_loss += loss
+                epoch_loss += loss.item()
 
                 pbar.set_postfix(**{'loss (batch)': loss.item()})
 
