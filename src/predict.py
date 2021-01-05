@@ -36,6 +36,21 @@ def mask_to_image(mask, fn = None, color:tuple = (255,255,0)):
         return Image.fromarray((mask * 255).astype(np.uint8))
     else:
         return Image.fromarray((mask * 255).astype(np.uint8)), fn(mask, color)
+def merge_pil_image(
+    img1_filename:str,
+    img2_filename:str,
+    weight:float = 0.5,
+    color_space = 'RGB' 
+):
+    img1 = Image.open(img1_filename)
+    img2 = Image.open(img2_filename)
+    # Make sure two image have the same size
+    assert img1.size == img2.size, f'Two images should have the same size, image1 have size {img1.size} while image2 have size {img2.size}'
+    blended = Image.blend(img1, img2, weight)
+    if color_space == 'RGB':
+        blended = np.stack((blended,)*3, axis=-1) # GRAY -> RGB
+        blended = (blended * 255).astype(np.uint8)
+    return Image.fromarray(blended)
 
 def predict_img(net,
                 full_img,
@@ -81,7 +96,8 @@ def predict_img(net,
 
 def get_output_filenames(
     in_files:list,
-    output_dir:str 
+    output_dir:str,
+    suffix:str
     ):
     out_files = []
     if not output_dir:
@@ -103,6 +119,12 @@ def get_output_filenames(
                 for example the output masked image of input image 'wrist/data/0/T1/0.jpg' would be 'wrist/eval/data-0-T1-0.jpg'
                 '''
                 filename = str(in_file).split('wrist/')[1].replace("/", "-")
+                if filename.endswith(('jpg')):
+                    filename = filename.replace(".jpg", suffix +".jpg")
+                elif filename.endswith(('png')):
+                    filename = filename.replace(".png", suffix +".png")
+                else:
+                    filename = filename.replace(".jpeg", suffix +".jpeg")
                 out_files.append(os.path.join(output_dir, filename))
     print(f'output files: {out_files}')
     return out_files
@@ -111,7 +133,8 @@ def get_output_filenames(
 def predict(
     input_images:list = None,
     target_images:list = None,
-    config_file:str = None
+    config_file:str = None,
+    save_file_suffix = None
 ):
     '''
     Compute output masked and its contours graphs given the "list" of input images filenames.
@@ -168,7 +191,8 @@ def predict(
     logging.info("Model loaded !")
     out_files = get_output_filenames(
         in_files = input_images,
-        output_dir = cfg_dict.get('output_dir',None)
+        output_dir = cfg_dict.get('output_dir',None),
+        suffix = save_file_suffix
     )
     countors_outs_files = []
     dc_val_records = []

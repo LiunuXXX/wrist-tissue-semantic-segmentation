@@ -1,0 +1,9 @@
+base_dir: /wrist/data/ 
+image_dir_suffix: T1
+mask_dir_suffix: MN
+learning_rate: 0.000000001
+batch_size: 1
+epochs: 50
+scale: 1
+validation: 0.1
+checkpoint_dir: /wrist/pretrained/

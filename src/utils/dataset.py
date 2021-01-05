@@ -26,7 +26,7 @@ class BasicMedicalDataset(Dataset):
         mask_ids = []
         self.image_and_masks = []
         assert 0 < scale <= 1, 'Scale must be between 0 and 1'
-        for path, dirs, filename in os.walk(root_imgs_dir): #omit files, loop through later
+        for path, dirs, filename in os.walk(root_imgs_dir): # omit files, loop through later
             for dirname in dirs:
                 fullpath = os.path.join(path,dirname)
                 if imgs_dir_name in dirname:
@@ -57,7 +57,11 @@ class BasicMedicalDataset(Dataset):
         return len(self.image_and_masks)
 
     @classmethod
-    def preprocess(cls, pil_img, scale):
+    def preprocess(
+        cls,
+        pil_img,
+        scale
+    ):
         w, h = pil_img.size
         newW, newH = int(scale * w), int(scale * h)
         assert newW > 0 and newH > 0, 'Scale is too small'

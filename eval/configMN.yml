@@ -1,0 +1,5 @@
+model_weights: /wrist/pretrained/MN_CP_epoch50.pth
+mask_threshold: 0.5
+scale: 1
+output_dir: /wrist/eval/
+save: True
