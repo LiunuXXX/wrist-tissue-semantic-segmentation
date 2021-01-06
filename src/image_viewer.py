@@ -82,7 +82,6 @@ class ImageViewer(framework.Framework):
     def __init__(self, root, evaluation_model = None):
         super().__init__(root)
         root.title("GUI")
-        self.create_gui()
         self.T1_image_filename = '/wrist/data/0/T1/0.jpg'
         self.T2_image_filename = '/wrist/data/0/T2/0.jpg'
         self.Carpal_tunnel_filename = '/wrist/data/0/CT/0.jpg'
@@ -91,11 +90,14 @@ class ImageViewer(framework.Framework):
         self.Sequence = defaultdict(list)
         self.Ouput_Sequence = defaultdict(list)
         self.scale_bar_slide_idx = 0
+        self.create_gui()
+        
     def create_gui(self):
         self.create_menu()
         self.create_top_bar()
         self.create_tool_bar()
         self.create_tool_bar_buttons()
+        self.create_scale_bar()
         self.create_canvas(text = "test")
         self.bind_menu_accelrator_keys()
 
@@ -397,52 +399,79 @@ class ImageViewer(framework.Framework):
 
     def display_image_on_all_label(self, filename_list):
         for filename in filename_list:
-            if 'CTOUT' in filename:
-                pass
-            elif 'CT' in filename:
-                ImageViewer.display_image_on_label(
-                    self.Carpal_tunnel_label, 
-                    self.Carpal_tunnel_image, 
-                    ImageViewer.open_image(filename),
-                    text = "Carpal-Tunnel:" + filename
-                )
-            elif 'MNOUT' in filename:
-                pass
-            elif 'MN' in filename:
-                ImageViewer.display_image_on_label(
-                    self.Median_Nerve_label, 
-                    self.Median_Nerve_image, 
-                    ImageViewer.open_image(filename),
-                    text = "Median-Nerve:" + filename
-                )
-            elif 'FTOUT' in filename:
-                pass
-            elif 'FT' in filename:
-                ImageViewer.display_image_on_label(
-                    self.Flexor_Tendons_label, 
-                    self.Flexor_Tendons_image, 
-                    ImageViewer.open_image(filename),
-                    text = "Flexor-Tendons:" + filename
-                )
-            elif 'T1' in filename:
-                ImageViewer.display_image_on_label(
-                    self.T1_image_label, 
-                    self.T1_image, 
-                    ImageViewer.open_image(filename, width = int(1.5 * 224), height = int(1.5 * 224)),
-                    text = "T1-Image:" + filename,
-                    pack_config = {'side' : 'left','anchor' : 'nw'}
-                )
-            elif 'T2' in filename:
-                ImageViewer.display_image_on_label(
-                    self.T2_image_label, 
-                    self.T2_image, 
-                    ImageViewer.open_image(filename, width = int(1.5 * 224), height = int(1.5 * 224)),
-                    text = "T2-Image:" + filename,
-                    pack_config = {'side' : 'left','anchor' : 'nw'}
-                )
-            elif 'blended' in filename:
-                pass
-                
+            if isinstance(filename, tuple):
+                filename_ , dc_val = filename
+                dc_val_text = "{:.3f}"
+                if 'CTOUT' in filename_ :
+                    ImageViewer.display_image_on_label(
+                        self.Carpal_tunnel_label_predict, 
+                        self.Carpal_tunnel_image_predict, 
+                        ImageViewer.open_image(filename_),
+                        text = "Carpal tunnel predicted:" + filename_ + "\n     CT-DC:" + dc_val_text.format(dc_val),
+                        place_config = (980, 150, 225, 225)
+                    )
+                elif 'FTOUT' in filename_:
+                    ImageViewer.display_image_on_label(
+                        self.Flexor_Tendons_label_predict, 
+                        self.Flexor_Tendons_image_predict, 
+                        ImageViewer.open_image(filename_),
+                        text = "Flexor Tendons predicted:" + filename_ + "\n      FT-DC:" + dc_val_text.format(dc_val),
+                        place_config = (700, 150, 225, 225)
+                    )
+                elif 'MNOUT' in filename_:
+                    ImageViewer.display_image_on_label(
+                        self.Median_Nerve_label_predict, 
+                        self.Median_Nerve_image_predict, 
+                        ImageViewer.open_image(filename_),
+                        text = "Median Nerve predicted:" + filename_ + "\n      MN-DC:" + dc_val_text.format(dc_val),
+                        place_config = (420, 150, 225, 225)
+                    )
+                elif 'blended' in filename_:
+                    ImageViewer.display_image_on_label(
+                        self.T12_label_predict, 
+                        self.T12_image_predict, 
+                        ImageViewer.open_image(filename_),
+                        text = "Blended Result:",
+                        place_config = (100, 150, int(225), int(225))
+                    )
+            else:
+                if 'CT' in filename:
+                    ImageViewer.display_image_on_label(
+                        self.Carpal_tunnel_label, 
+                        self.Carpal_tunnel_image, 
+                        ImageViewer.open_image(filename),
+                        text = "Carpal-Tunnel:" + filename
+                    )
+                elif 'MN' in filename:
+                    ImageViewer.display_image_on_label(
+                        self.Median_Nerve_label, 
+                        self.Median_Nerve_image, 
+                        ImageViewer.open_image(filename),
+                        text = "Median-Nerve:" + filename
+                    )
+                elif 'FT' in filename:
+                    ImageViewer.display_image_on_label(
+                        self.Flexor_Tendons_label, 
+                        self.Flexor_Tendons_image, 
+                        ImageViewer.open_image(filename),
+                        text = "Flexor-Tendons:" + filename
+                    )
+                elif 'T1' in filename:
+                    ImageViewer.display_image_on_label(
+                        self.T1_image_label, 
+                        self.T1_image, 
+                        ImageViewer.open_image(filename, width = int(1.5 * 224), height = int(1.5 * 224)),
+                        text = "T1-Image:" + filename,
+                        pack_config = {'side' : 'left','anchor' : 'nw'}
+                    )
+                elif 'T2' in filename:
+                    ImageViewer.display_image_on_label(
+                        self.T2_image_label, 
+                        self.T2_image, 
+                        ImageViewer.open_image(filename, width = int(1.5 * 224), height = int(1.5 * 224)),
+                        text = "T2-Image:" + filename,
+                        pack_config = {'side' : 'left','anchor' : 'nw'}
+                    )
             
     def select_sequence(self, event = None):
         root_directory_path = filedialog.askdirectory()
@@ -450,9 +479,9 @@ class ImageViewer(framework.Framework):
             self.Sequence.clear()
             self.Sequence = self.add_sequence_from_directory(root_directory_path = root_directory_path)
             self.display_image_on_all_label(self.Sequence[self.scale_bar_slide_idx])
-            self.create_scale_bar()
 
     def add_sequence_from_directory(self, root_directory_path = None) -> defaultdict(list):
+
         if not root_directory_path:
             return None
         # get all sub-folder name
@@ -488,6 +517,7 @@ class ImageViewer(framework.Framework):
                         image_files_in_directory[image_idx].insert(_image_type,full_image_path)
         print(image_files_in_directory[0])
         self.destroy_single_selection()
+        self.remove_options_from_top_bar()
         return image_files_in_directory
 
     def get_T1_T2_blended_image(
@@ -547,6 +577,23 @@ class ImageViewer(framework.Framework):
         Carpal_tunnel_score = 0.0
         if not self.Sequence:
             if self.T1_image_filename and self.T2_image_filename:
+                # MN
+                mn_out_files, mn_countors_outs_files, mn_dc_val_records = predict(
+                    input_images = [self.T1_image_filename],
+                    target_images = [self.Median_Nerve_filename],
+                    config_file="/wrist/eval/configMN.yml",
+                    save_file_suffix = "MNOUT"
+                )
+                _image = ImageViewer.open_image(mn_out_files[0])
+                ImageViewer.display_image_on_label(
+                    self.Median_Nerve_label_predict, 
+                    self.Median_Nerve_image_predict, 
+                    _image,
+                    text = "Flexor Tendons predicted:" + mn_out_files[0],
+                    place_config = (420, 150, 225, 225)
+                )
+                Median_nerve_score = mn_dc_val_records[0]
+                # CT
                 ct_out_files, ct_countors_outs_files, ct_dc_val_records = predict(
                     input_images = [self.T1_image_filename],
                     target_images = [self.Carpal_tunnel_filename],
@@ -562,7 +609,7 @@ class ImageViewer(framework.Framework):
                     place_config = (980, 150, 225, 225)
                 )
                 Carpal_tunnel_score = ct_dc_val_records[0]
-                
+                # FT
                 ft_out_files, ft_countors_outs_files, ft_dc_val_records = predict(
                     input_images = [self.T1_image_filename],
                     target_images = [self.Flexor_Tendons_filename],
@@ -574,9 +621,10 @@ class ImageViewer(framework.Framework):
                     self.Flexor_Tendons_label_predict, 
                     self.Flexor_Tendons_image_predict, 
                     _image,
-                    text = "Carpal tunnel predicted:" + ft_out_files[0],
+                    text = "Flexor Tendons predicted:" + ft_out_files[0],
                     place_config = (700, 150, 225, 225)
                 )
+                Flexor_tendons_score = ft_dc_val_records[0]
 
                 blended_filename = self.get_T1_T2_blended_image(
                     self.T1_image_filename, 
@@ -593,7 +641,7 @@ class ImageViewer(framework.Framework):
                     place_config = (100, 150, int(225), int(225))
                 )
                     
-            eval_result = f"image DC :Median nerve : {Median_nerve_score} Flexor tendons : {Flexor_tendons_score}  Carpal tunnel : {Carpal_tunnel_score}"
+            eval_result = f"Image DC \n Median nerve : {Median_nerve_score} \nFlexor tendons : {Flexor_tendons_score}  \n Carpal tunnel : {Carpal_tunnel_score}"
         else:
             self.Ouput_Sequence.clear()
             '''
@@ -604,6 +652,7 @@ class ImageViewer(framework.Framework):
             }
             '''
             for idx,(ct, mn, ft, t1, t2) in self.Sequence.items():
+                # CT
                 ct_out_files, ct_countors_outs_files, ct_dc_val_records = predict(
                     input_images = [t1],
                     target_images = [ct],
@@ -612,6 +661,7 @@ class ImageViewer(framework.Framework):
                 )
                 Carpal_tunnel_score = Carpal_tunnel_score + ct_dc_val_records[0]
                 self.Ouput_Sequence[idx].insert(0,(ct_out_files[0], ct_dc_val_records[0]))
+                # FT
                 ft_out_files, ft_countors_outs_files, ft_dc_val_records = predict(
                     input_images = [t1],
                     target_images = [ft],
@@ -620,17 +670,28 @@ class ImageViewer(framework.Framework):
                 )
                 Flexor_tendons_score = Flexor_tendons_score + ft_dc_val_records[0]
                 self.Ouput_Sequence[idx].insert(1, (ft_out_files[0], ft_dc_val_records[0]))
-                self.Ouput_Sequence[idx].insert(2, ("MNNotYet", -1))
+                # MN
+                mn_out_files, mn_countors_outs_files, mn_dc_val_records = predict(
+                    input_images = [t1],
+                    target_images = [mn],
+                    config_file="/wrist/eval/configMN.yml",
+                    save_file_suffix = "MNOUT"
+                )
+                Median_nerve_score = Median_nerve_score + mn_dc_val_records[0]
+                self.Ouput_Sequence[idx].insert(2, (mn_out_files[0], mn_dc_val_records[0]))
+
                 blended_filename = self.get_T1_T2_blended_image(
                     t1, 
                     t2,
                     ct_countor_tri = (ct_countors_outs_files[0], 512, (255,0,0)),
-                    ft_countor_tri = (ft_countors_outs_files[0], 512, (0,0,255))
+                    ft_countor_tri = (ft_countors_outs_files[0], 512, (0,0,255)),
+                    mn_countor_tri = (mn_countors_outs_files[0], 512, (255,255,0))
                 )
                 self.Ouput_Sequence[idx].insert(3, (blended_filename, -1))
             Carpal_tunnel_score = Carpal_tunnel_score / (len(self.Sequence))
             Flexor_tendons_score = Flexor_tendons_score / (len(self.Sequence))
-            eval_result = f"image DC :Median nerve : {Median_nerve_score} Flexor tendons : {Flexor_tendons_score}  Carpal tunnel : {Carpal_tunnel_score}"
+            Median_nerve_score = Median_nerve_score / (len(self.Sequence))
+            eval_result = f"Sequence DC(mean) \n Median nerve : {Median_nerve_score}\n Flexor tendons : {Flexor_tendons_score} \n Carpal tunnel : {Carpal_tunnel_score}"
         tk.Label(
             self.top_bar,
             text=eval_result
@@ -666,7 +727,7 @@ class ImageViewer(framework.Framework):
         if self.Sequence:
             self.scale_bar_slide_idx = int(self.scale_bar.get())
             self.display_image_on_all_label(self.Sequence[self.scale_bar_slide_idx])
-
+            self.display_image_on_all_label(self.Ouput_Sequence[self.scale_bar_slide_idx])
 
 if __name__ == '__main__':
     root = tk.Tk()
