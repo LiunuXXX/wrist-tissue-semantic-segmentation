@@ -553,6 +553,17 @@ class ImageViewer(framework.Framework):
                             (x,y), 
                             ft_draw_color
                         )
+        if mn_countor_tri is not None:
+            (mn_countour_filename, pixel_threshold, mn_draw_color) = mn_countor_tri
+            mn_countour_img = Image.open(mn_countour_filename)
+            for x in range(mn_countour_img.width):
+                for y in range(mn_countour_img.height):
+                    pixel_val = sum(list(mn_countour_img.getpixel((x,y))))
+                    if pixel_val >= pixel_threshold:
+                        blended_T1_T2_img.putpixel(
+                            (x,y), 
+                            mn_draw_color
+                        )
         save_location = save_dir + "blended-" + os.path.basename(T1_image_filename) 
         blended_T1_T2_img.save(save_location)
         return str(save_location)

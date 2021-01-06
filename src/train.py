@@ -11,6 +11,7 @@ from tqdm import tqdm
 
 from model.unet import UNet
 from eval import eval_net
+from dice_loss import dice_coeff, DiceLoss
 from utils.dataset import BasicMedicalDataset
 from torch.utils.data import DataLoader, random_split
 def TrainNet(
@@ -25,7 +26,8 @@ def TrainNet(
     lr = 0.001,
     val_percent = 0.1,
     save_checkpoints = True,
-    img_scale = 1
+    img_scale = 1,
+    custome_loss_fn = None
 ):
     print(f"training data {root_imgs_dir}")
     dataset = BasicMedicalDataset(root_imgs_dir, imgs_dir_name, mask_dir_name, img_scale)
@@ -68,7 +70,9 @@ def TrainNet(
         optimizer, 
         'min' if Net.n_classes > 1 else 'max', patience=2
     )
-    if Net.n_classes > 1:
+    if custome_loss_fn is not None:
+        criterion = custome_loss_fn()
+    elif Net.n_classes > 1:
         criterion = nn.CrossEntropyLoss()
     else:
         criterion = nn.BCEWithLogitsLoss()
@@ -91,6 +95,7 @@ def TrainNet(
                 true_mask = true_mask.to(device = device, dtype = mask_type)
 
                 masks_pred = Net(imgs)
+                
                 loss = criterion(masks_pred, true_mask)
                 epoch_loss += loss.item()
 
@@ -156,6 +161,11 @@ def main():
                  f'\t{net.n_classes} output channels (classes)\n'
                  f'\t{"Bilinear" if net.bilinear else "Transposed conv"} upscaling')
     net.to(device=device)
+    # set up custome_loss_fn
+    custome_loss_fn = None
+    if cfg_dict.get('loss_function', None) == 'dice_loss':
+        logging.info(f"\n Use custom loss function-{cfg_dict.get('loss_function', None)}")
+        custome_loss_fn = DiceLoss
     # start training
     TrainNet(
         Net = net,
@@ -169,7 +179,8 @@ def main():
         lr = cfg_dict.get("learning_rate", 0.0001),
         val_percent = cfg_dict.get("validation", 0.2),
         save_checkpoints = True,
-        img_scale = cfg_dict.get("scale", 1)
+        img_scale = cfg_dict.get("scale", 1),
+        custome_loss_fn = custome_loss_fn
     )
 if __name__ == "__main__":
     main()

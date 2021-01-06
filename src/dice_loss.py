@@ -3,7 +3,10 @@ Use the Dice Coefficient(DC) to evaluate segmentation result with the ground tru
 DC = 2(A∩B) / (A+B)
 '''
 import torch
+import torch.nn as nn
 from torch.autograd import Function
+import torch.nn.functional as F
+import functools
 
 
 class DiceCoeff(Function):
@@ -20,7 +23,6 @@ class DiceCoeff(Function):
 
     # This function has only a single output, so it gets only one gradient
     def backward(self, grad_output):
-
         input, target = self.saved_variables
         grad_input = grad_target = None
 
@@ -31,6 +33,7 @@ class DiceCoeff(Function):
             grad_target = None
 
         return grad_input, grad_target
+
 
 
 def dice_coeff(input, target):
@@ -44,3 +47,19 @@ def dice_coeff(input, target):
         s = s + DiceCoeff().forward(c[0], c[1])
 
     return s / (i + 1)
+
+class DiceLoss(nn.Module):
+    def __init__(self, weight=None, size_average=True):
+        super(DiceLoss, self).__init__()
+ 
+    def forward(self, inputs, targets, smooth=1):        
+        
+        inputs = F.sigmoid(inputs)       
+        
+        inputs = inputs.view(-1)
+        targets = targets.view(-1)
+        
+        intersection = (inputs * targets).sum()                            
+        dice = (2.*intersection + smooth)/(inputs.sum() + targets.sum() + smooth)  
+        
+        return 1 - dice
