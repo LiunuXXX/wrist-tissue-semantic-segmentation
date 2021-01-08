@@ -9,8 +9,8 @@ from PIL import Image
 from torchvision import transforms
 import torchvision.utils as vutils
 from model.unet import UNet
-from utils.data_vis import plot_img_and_mask
-from utils.dataset import BasicMedicalDataset
+from data_vis import plot_img_and_mask
+from dataset import BasicMedicalDataset
 from dice_loss import (dice_coeff, DiceCoeff)
 from cv2 import cv2
 
@@ -100,6 +100,7 @@ def get_output_filenames(
     suffix:str
     ):
     out_files = []
+    print(output_dir)
     if not output_dir:
         logging.error("The folder to which the file location of output is not declared")
         raise SystemExit()
@@ -118,13 +119,14 @@ def get_output_filenames(
                 and prefix the output folder as the output mask image Absolute path
                 for example the output masked image of input image 'wrist/data/0/T1/0.jpg' would be 'wrist/eval/data-0-T1-0.jpg'
                 '''
-                filename = str(in_file).split('wrist/')[1].replace("/", "-")
+                filename = str(in_file).replace("/", "-")
                 if filename.endswith(('jpg')):
                     filename = filename.replace(".jpg", suffix +".jpg")
                 elif filename.endswith(('png')):
                     filename = filename.replace(".png", suffix +".png")
                 else:
                     filename = filename.replace(".jpeg", suffix +".jpeg")
+                
                 out_files.append(os.path.join(output_dir, filename))
     print(f'output files: {out_files}')
     return out_files

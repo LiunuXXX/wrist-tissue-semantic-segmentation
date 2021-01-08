@@ -82,11 +82,11 @@ class ImageViewer(framework.Framework):
     def __init__(self, root, evaluation_model = None):
         super().__init__(root)
         root.title("GUI")
-        self.T1_image_filename = '/wrist/data/0/T1/0.jpg'
-        self.T2_image_filename = '/wrist/data/0/T2/0.jpg'
-        self.Carpal_tunnel_filename = '/wrist/data/0/CT/0.jpg'
-        self.Flexor_Tendons_filename = '/wrist/data/0/FT/0.jpg'
-        self.Median_Nerve_filename = '/wrist/data/0/MN/0.jpg'
+        self.T1_image_filename = '../data/0/T1/0.jpg'
+        self.T2_image_filename = '../data/0/T2/0.jpg'
+        self.Carpal_tunnel_filename = '..//data/0/CT/0.jpg'
+        self.Flexor_Tendons_filename = '../data/0/FT/0.jpg'
+        self.Median_Nerve_filename = '../data/0/MN/0.jpg'
         self.Sequence = defaultdict(list)
         self.Ouput_Sequence = defaultdict(list)
         self.scale_bar_slide_idx = 0
@@ -136,22 +136,22 @@ class ImageViewer(framework.Framework):
     def create_canvas(self, text, width_param = 225, height_param = 225):
         #T1 image configuation
         self.T1_image = ImageTk.PhotoImage(
-            Image.open('/wrist/data/0/T1/0.jpg').resize(
+            Image.open('../data/0/T1/0.jpg').resize(
                 (int(width_param * 1.5), int(height_param * 1.5)), Image.ANTIALIAS)
         )
         self.T1_image_label = tk.Label(
-            root, text='/wrist/data/0/T1/0.jpg',anchor ='nw',
+            root, text='../data/0/T1/0.jpg',anchor ='nw',
             image = self.T1_image, 
             compound = 'bottom'
         )
         self.T1_image_label.pack(side='left', anchor=NW)
         #T2 image configuation
         self.T2_image = ImageTk.PhotoImage(
-            Image.open('/wrist/data/0/T2/0.jpg').resize(
+            Image.open('../data/0/T2/0.jpg').resize(
                 (int(width_param * 1.5), int(height_param * 1.5)), Image.ANTIALIAS)
         )
         self.T2_image_label = tk.Label(
-            root, text='/wrist/data/0/T2/0.jpg',anchor ='nw',
+            root, text='../data/0/T2/0.jpg',anchor ='nw',
             image = self.T2_image, 
             compound = 'bottom'
         )
@@ -159,7 +159,7 @@ class ImageViewer(framework.Framework):
 
         #Median Nerve image configuation
         self.Median_Nerve_image = ImageTk.PhotoImage(
-            Image.open('/wrist/data/0/MN/0.jpg').resize(
+            Image.open('../data/0/MN/0.jpg').resize(
                 (width_param, height_param), Image.ANTIALIAS)
         )
         self.Median_Nerve_label = tk.Label(
@@ -170,11 +170,11 @@ class ImageViewer(framework.Framework):
         self.Median_Nerve_label.pack(side='left', anchor=NE)
 
         self.Flexor_Tendons_image = ImageTk.PhotoImage(
-            Image.open('/wrist/data/0/FT/0.jpg').resize(
+            Image.open('../data/0/FT/0.jpg').resize(
                 (width_param, height_param), Image.ANTIALIAS)
         )
         self.Flexor_Tendons_label = tk.Label(
-            root,text='Flexor_Tendons:/wrist/data/0/FT/0.jpg',
+            root,text='Flexor_Tendons:../data/0/FT/0.jpg',
             image = self.Flexor_Tendons_image, 
             compound = 'top'
         )
@@ -193,7 +193,7 @@ class ImageViewer(framework.Framework):
 
         # predicted image result
         self.T12_image_predict = ImageTk.PhotoImage(
-            Image.open('/wrist/src/icons/placeholder.png').resize(
+            Image.open('./icons/placeholder.png').resize(
                 (int(width_param * 1.8), int(height_param * 1.8)), Image.ANTIALIAS)
         )
         self.T12_label_predict = tk.Label(
@@ -212,7 +212,7 @@ class ImageViewer(framework.Framework):
 
         # Median Nerve predicted image configuation
         self.Median_Nerve_image_predict = ImageTk.PhotoImage(
-            Image.open('/wrist/src/icons/placeholder.png').resize(
+            Image.open('./icons/placeholder.png').resize(
                 (width_param, height_param), Image.ANTIALIAS)
         )
         self.Median_Nerve_label_predict = tk.Label(
@@ -230,7 +230,7 @@ class ImageViewer(framework.Framework):
 
         # Flexor Tendons predicted image configuation
         self.Flexor_Tendons_image_predict = ImageTk.PhotoImage(
-            Image.open('/wrist/src/icons/placeholder.png').resize(
+            Image.open('./icons/placeholder.png').resize(
                 (width_param, height_param), Image.ANTIALIAS)
         )
         self.Flexor_Tendons_label_predict = tk.Label(
@@ -248,7 +248,7 @@ class ImageViewer(framework.Framework):
 
         # Carpal tunnel predicted image configuation
         self.Carpal_tunnel_image_predict = ImageTk.PhotoImage(
-            Image.open('/wrist/src/icons/placeholder.png').resize(
+            Image.open('./icons/placeholder.png').resize(
                 (width_param, height_param), Image.ANTIALIAS)
         )
         self.Carpal_tunnel_label_predict = tk.Label(
@@ -274,6 +274,8 @@ class ImageViewer(framework.Framework):
     @classmethod
     def open_image(cls, filename, width = 224, height = 224):
         img = None
+        if not filename:
+            return None
         img = ImageTk.PhotoImage(
             Image.open(filename).resize(
                 (width, height), Image.ANTIALIAS)
@@ -407,7 +409,7 @@ class ImageViewer(framework.Framework):
                         self.Carpal_tunnel_label_predict, 
                         self.Carpal_tunnel_image_predict, 
                         ImageViewer.open_image(filename_),
-                        text = "Carpal tunnel predicted:" + filename_ + "\n     CT-DC:" + dc_val_text.format(dc_val),
+                        text = "Carpal tunnel predicted:" + filename_ + "\n       CT-DC:" + dc_val_text.format(dc_val),
                         place_config = (980, 150, 225, 225)
                     )
                 elif 'FTOUT' in filename_:
@@ -415,7 +417,7 @@ class ImageViewer(framework.Framework):
                         self.Flexor_Tendons_label_predict, 
                         self.Flexor_Tendons_image_predict, 
                         ImageViewer.open_image(filename_),
-                        text = "Flexor Tendons predicted:" + filename_ + "\n      FT-DC:" + dc_val_text.format(dc_val),
+                        text = "Flexor Tendons predicted:" + filename_ + "\n        FT-DC:" + dc_val_text.format(dc_val),
                         place_config = (700, 150, 225, 225)
                     )
                 elif 'MNOUT' in filename_:
@@ -423,7 +425,7 @@ class ImageViewer(framework.Framework):
                         self.Median_Nerve_label_predict, 
                         self.Median_Nerve_image_predict, 
                         ImageViewer.open_image(filename_),
-                        text = "Median Nerve predicted:" + filename_ + "\n      MN-DC:" + dc_val_text.format(dc_val),
+                        text = "Median Nerve predicted:" + filename_ + "\n        MN-DC:" + dc_val_text.format(dc_val),
                         place_config = (420, 150, 225, 225)
                     )
                 elif 'blended' in filename_:
@@ -524,7 +526,7 @@ class ImageViewer(framework.Framework):
         self, 
         T1_image_filename, 
         T2_image_filename, 
-        save_dir='/wrist/eval/',
+        save_dir='../eval/',
         ct_countor_tri:tuple = None,
         mn_countor_tri:tuple = None,
         ft_countor_tri:tuple = None, 
@@ -592,7 +594,7 @@ class ImageViewer(framework.Framework):
                 mn_out_files, mn_countors_outs_files, mn_dc_val_records = predict(
                     input_images = [self.T1_image_filename],
                     target_images = [self.Median_Nerve_filename],
-                    config_file="/wrist/eval/configMN.yml",
+                    config_file="../eval/configMN.yml",
                     save_file_suffix = "MNOUT"
                 )
                 _image = ImageViewer.open_image(mn_out_files[0])
@@ -608,7 +610,7 @@ class ImageViewer(framework.Framework):
                 ct_out_files, ct_countors_outs_files, ct_dc_val_records = predict(
                     input_images = [self.T1_image_filename],
                     target_images = [self.Carpal_tunnel_filename],
-                    config_file="/wrist/eval/configCT.yml",
+                    config_file="../eval/configCT.yml",
                     save_file_suffix = "CTOUT"
                 )
                 _image = ImageViewer.open_image(ct_out_files[0])
@@ -624,7 +626,7 @@ class ImageViewer(framework.Framework):
                 ft_out_files, ft_countors_outs_files, ft_dc_val_records = predict(
                     input_images = [self.T1_image_filename],
                     target_images = [self.Flexor_Tendons_filename],
-                    config_file="/wrist/eval/configFT.yml",
+                    config_file="../eval/configFT.yml",
                     save_file_suffix = "FTOUT"
                 )
                 _image = ImageViewer.open_image(ft_out_files[0])
@@ -641,7 +643,8 @@ class ImageViewer(framework.Framework):
                     self.T1_image_filename, 
                     self.T2_image_filename,
                     ct_countor_tri = (ct_countors_outs_files[0], 512, (255,0,0)),
-                    ft_countor_tri = (ft_countors_outs_files[0], 512, (0,0,255))
+                    ft_countor_tri = (ft_countors_outs_files[0], 512, (0,0,255)),
+                    mn_countor_tri = (mn_countors_outs_files[0], 512, (255,255,0))
                 )
                     
                 ImageViewer.display_image_on_label(
@@ -667,7 +670,7 @@ class ImageViewer(framework.Framework):
                 ct_out_files, ct_countors_outs_files, ct_dc_val_records = predict(
                     input_images = [t1],
                     target_images = [ct],
-                    config_file="/wrist/eval/configCT.yml",
+                    config_file="../eval/configCT.yml",
                     save_file_suffix = "CTOUT"
                 )
                 Carpal_tunnel_score = Carpal_tunnel_score + ct_dc_val_records[0]
@@ -676,7 +679,7 @@ class ImageViewer(framework.Framework):
                 ft_out_files, ft_countors_outs_files, ft_dc_val_records = predict(
                     input_images = [t1],
                     target_images = [ft],
-                    config_file="/wrist/eval/configFT.yml",
+                    config_file="../eval/configFT.yml",
                     save_file_suffix = "FTOUT"
                 )
                 Flexor_tendons_score = Flexor_tendons_score + ft_dc_val_records[0]
@@ -685,7 +688,7 @@ class ImageViewer(framework.Framework):
                 mn_out_files, mn_countors_outs_files, mn_dc_val_records = predict(
                     input_images = [t1],
                     target_images = [mn],
-                    config_file="/wrist/eval/configMN.yml",
+                    config_file="../eval/configMN.yml",
                     save_file_suffix = "MNOUT"
                 )
                 Median_nerve_score = Median_nerve_score + mn_dc_val_records[0]

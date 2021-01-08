@@ -12,7 +12,7 @@ from tqdm import tqdm
 from model.unet import UNet
 from eval import eval_net
 from dice_loss import dice_coeff, DiceLoss
-from utils.dataset import BasicMedicalDataset
+from dataset import BasicMedicalDataset
 from torch.utils.data import DataLoader, random_split
 def TrainNet(
     Net,

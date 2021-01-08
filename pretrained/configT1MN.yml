@@ -1,10 +1,10 @@
-base_dir: /wrist/data/ 
+base_dir: ./data/ 
 image_dir_suffix: T1
 mask_dir_suffix: MN
-learning_rate: 0.0001
+learning_rate: 0.00001
 batch_size: 1
-epochs: 10
+epochs: 1
 scale: 1
 validation: 0.1
-checkpoint_dir: /wrist/pretrained/
+checkpoint_dir: ./pretrained/
 loss_function: 'dice_loss'
