@@ -163,7 +163,7 @@ class ImageViewer(framework.Framework):
                 (width_param, height_param), Image.ANTIALIAS)
         )
         self.Median_Nerve_label = tk.Label(
-            root,text='Median_Nerve:/wrist/data/0/MN/0.jpg',anchor ='ne',
+            root,text='Median_Nerve:../data/0/MN/0.jpg',anchor ='ne',
             image = self.Median_Nerve_image, 
             compound = 'top'
         )
@@ -181,11 +181,11 @@ class ImageViewer(framework.Framework):
         self.Flexor_Tendons_label.pack(side='left', anchor=NE)
 
         self.Carpal_tunnel_image = ImageTk.PhotoImage(
-            Image.open('/wrist/data/0/CT/0.jpg').resize(
+            Image.open('../data/0/CT/0.jpg').resize(
                 (width_param, height_param), Image.ANTIALIAS)
         )
         self.Carpal_tunnel_label = tk.Label(
-            root,text='Carpal_tunnel:/wrist/data/0/CT/0.jpg',
+            root,text='Carpal_tunnel:../data/0/CT/0.jpg',
             image = self.Carpal_tunnel_image, 
             compound = 'top'
         )

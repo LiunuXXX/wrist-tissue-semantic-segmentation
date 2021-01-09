@@ -223,5 +223,3 @@ def predict(
             dc_val_records.append(dc_val)
             logging.info(f"\nMask saved to {out_files[i]}, Countour saved to {out_contour}")
     return out_files, countors_outs_files, dc_val_records
-if __name__ == "__main__":
-    predict()
